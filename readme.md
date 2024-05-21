@@ -10,7 +10,10 @@ This is the MFE SDK.
 ```
 go get -u github.com/dengany/mfesdk
 
-## 简单示例
+
+
+```
+## 简单示例   
 
 ```go
 package main
@@ -29,11 +32,11 @@ type Demo struct {
 
 func main() {
 	op := &mfesdk.MfeOption{
-		PubPath:  "cer/xxxx.cer",
-		PriPath:  "cer/xxx.pfx",
-		PriPwd:   "123456",
-		AgencyNo: "20240226175310079X",
-		IsProd:   false,
+		PubPath:  "cer/xxxx.cer", // 公钥文件路径
+		PriPath:  "cer/xxx.pfx", // 私钥文件路径
+		PriPwd:   "123456", // 私钥密码
+		AgencyNo: "20240226175310079X", // 机构号
+		IsProd:   false, // 测试环境
 	}
 	mfe := mfesdk.NewMfe(op)
 	params := gjson.MustEncodeString(Demo{Name: "1234"})
@@ -43,3 +46,4 @@ func main() {
 	}
 	fmt.Println(ss)
 }
+```
