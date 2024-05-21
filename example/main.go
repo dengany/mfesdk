@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	mfesdk "github.com/dengany/mfesdk"
+	"github.com/dengany/mfesdk"
 
 	"github.com/gogf/gf/v2/encoding/gjson"
 )
