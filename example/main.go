@@ -15,16 +15,21 @@ type Demo struct {
 func main() {
 	op := &mfesdk.MfeOption{
 		PubPath:  "cer/xxxx.cer",
-		PriPath:  "cer/xxx.pfx",
+		PriPath:  "cer/xxxx.pfx",
 		PriPwd:   "123456",
-		AgencyNo: "20240226175310079X",
+		AgencyNo: "20240226175310079x",
 		IsProd:   false,
 	}
 	mfe := mfesdk.NewMfe(op)
 	params := gjson.MustEncodeString(Demo{Name: "1234"})
-	ss, err := mfe.PostQuery(mfesdk.Demo_API, params)
+	apires, err := mfe.PostQuery(mfesdk.Demo_API, params)
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println(ss)
+	fmt.Println(apires)
+	fileres, err := mfe.UploadFile("test.txt")
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(fileres)
 }

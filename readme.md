@@ -40,10 +40,16 @@ func main() {
 	}
 	mfe := mfesdk.NewMfe(op)
 	params := gjson.MustEncodeString(Demo{Name: "1234"})
-	ss, err := mfe.PostQuery(mfesdk.Demo_API, params)
+	// 调用接口
+	apires, err := mfe.PostQuery(mfesdk.Demo_API, params)
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println(ss)
-}
+	fmt.Println(apires)
+	// 上传文件
+	fileres, err := mfe.UploadFile("test.txt")
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(fileres)
 ```

@@ -154,3 +154,11 @@ func verify(data []byte, sign []byte, cfg *MFECONF) (bool, error) {
 	}
 	return true, nil
 }
+
+func fileencrypt(data string, pub *rsa.PublicKey) ([]byte, error) {
+	encrypted, err := rsa.EncryptPKCS1v15(rand.Reader, pub, []byte(data))
+	if err != nil {
+		return nil, err
+	}
+	return encrypted, nil
+}
