@@ -147,14 +147,11 @@ func doUploadFile(urlStr string, filePath string, cfg *MFECONF) (*Response, erro
 	writer := multipart.NewWriter(body)
 	_ = writer.WriteField("hash", hashPlains)
 
-	file, _ = os.Open(filePath)
-	defer func(file *os.File) {
-		err := file.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}(file)
-
+	file, err = os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
 	part, err := writer.CreateFormFile("file", filepath.Base(filePath))
 	if err != nil {
 		log.Fatal(err)
@@ -162,7 +159,6 @@ func doUploadFile(urlStr string, filePath string, cfg *MFECONF) (*Response, erro
 	if _, err := io.Copy(part, file); err != nil {
 		log.Fatal(err)
 	}
-
 	if err := writer.Close(); err != nil {
 		log.Fatal(err)
 	}
