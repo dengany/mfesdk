@@ -2,9 +2,11 @@ package mfesdk
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -14,10 +16,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/gogf/gf/v2/encoding/gjson"
 	"github.com/gogf/gf/v2/frame/g"
-	"github.com/gogf/gf/v2/os/gctx"
-	"github.com/gogf/gf/v2/util/gconv"
 )
 
 type Response struct {
@@ -27,7 +26,7 @@ type Response struct {
 }
 
 func doPostReq(urlStr string, reqBody []byte, cfg *MFECONF) (*Response, error) {
-	ctx := gctx.New()
+	ctx := context.Background()
 	client := g.Client()
 	if cfg.IsProd {
 		urlStr = BASE_API_URL + urlStr
@@ -42,7 +41,7 @@ func doPostReq(urlStr string, reqBody []byte, cfg *MFECONF) (*Response, error) {
 	client.SetHeader("X-Sign", Sign)
 	client.SetHeader("X-Time", timd)
 	client.SetHeader("X-Trace", fmt.Sprint(time.Now().UnixNano()))
-	req := gjson.MustEncode(g.Map{"param": string(reqBody)})
+	req, _ := json.Marshal(g.Map{"param": string(reqBody)})
 	res, err := client.Post(ctx, urlStr, req)
 	if err != nil {
 		g.Log().Error(ctx, err)
@@ -53,7 +52,8 @@ func doPostReq(urlStr string, reqBody []byte, cfg *MFECONF) (*Response, error) {
 
 	body := res.ReadAll()
 	response := &Response{}
-	err = gconv.Scan(body, response)
+	// err = gconv.Scan(body, response)
+	err = json.Unmarshal(body, response)
 	if err != nil {
 		g.Log().Error(ctx, err)
 		return nil, err
@@ -192,7 +192,8 @@ func doUploadFile(urlStr string, filePath string, cfg *MFECONF) (*Response, erro
 		return nil, err
 	}
 	response := &Response{}
-	err = gconv.Scan(resbody, response)
+	err = json.Unmarshal(resbody, response)
+	// err = gconv.Scan(resbody, response)
 	if err != nil {
 		log.Fatal(err)
 		return nil, err
