@@ -78,7 +78,7 @@ func (c *MFECONF) PostQuery(urlStr string, reqBody string) (*Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	res, err := doPostReq(urlStr, reqBodyBytes, c)
+	res, err := doPostReq(urlStr, []byte(reqBodyBytes), c)
 	if err != nil {
 		return nil, err
 	}

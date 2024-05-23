@@ -1,0 +1,153 @@
+package mfesdk
+
+import (
+	"crypto"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/sha256"
+	"crypto/x509"
+	"encoding/base64"
+	"encoding/pem"
+	"errors"
+	"os"
+
+	"golang.org/x/crypto/pkcs12"
+)
+
+func PrivateKey(pfxPath string, password string) (*rsa.PrivateKey, error) {
+	pfxData, err := os.ReadFile(pfxPath)
+	if err != nil {
+		return nil, err
+	}
+
+	blocks, err := pkcs12.ToPEM(pfxData, password)
+	if err != nil {
+		return nil, err
+	}
+
+	_, rest := pem.Decode(blocks[0].Bytes)
+
+	privateKey, err := x509.ParsePKCS1PrivateKey(rest)
+	if err != nil {
+		return nil, err
+	}
+
+	return privateKey, nil
+}
+
+func PublicKey(cerPath string) (*rsa.PublicKey, error) {
+	cerData, err := os.ReadFile(cerPath)
+	if err != nil {
+		return nil, err
+	}
+
+	block, _ := pem.Decode(cerData)
+	if block == nil {
+		return nil, errors.New("failed to decode PEM block containing the public key")
+	}
+
+	cert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	publicKey, ok := cert.PublicKey.(*rsa.PublicKey)
+	if !ok {
+		return nil, errors.New("unable to extract RSA public key")
+	}
+
+	return publicKey, nil
+}
+
+func Encrypt(publicKey *rsa.PublicKey, plains string) (string, error) {
+
+	//encrypted, err := rsa.EncryptPKCS1v15(rand.Reader, publicKey, []byte(plains))
+	//if err != nil {
+	//	return "", err
+	//}
+
+	// cipher := base64.StdEncoding.EncodeToString(encrypted)
+
+	encrypted := []byte(plains)
+	blockSize := (publicKey.N.BitLen() / 8) - 11
+
+	// Split the data into blocks
+	var blocks [][]byte
+	for blockSize < len(encrypted) {
+		encrypted, blocks = encrypted[blockSize:], append(blocks, encrypted[0:blockSize:blockSize])
+	}
+	blocks = append(blocks, encrypted)
+
+	// Encrypt each block
+	var ciphers []byte
+	for _, block := range blocks {
+		cipher, err := rsa.EncryptPKCS1v15(rand.Reader, publicKey, block)
+		if err != nil {
+			return "", err
+		}
+		ciphers = append(ciphers, cipher...)
+	}
+
+	cipher := base64.StdEncoding.EncodeToString(ciphers)
+	return cipher, nil
+}
+
+func Decrypt(privateKey *rsa.PrivateKey, cipher string) (string, error) {
+	decoded, err := base64.StdEncoding.DecodeString(cipher)
+	if err != nil {
+		return "", err
+	}
+
+	//plains, err := rsa.DecryptPKCS1v15(rand.Reader, privateKey, decoded)
+	//if err != nil {
+	//	return "", err
+	//}
+
+	blockSize := privateKey.N.BitLen() / 8
+
+	// Split the data into blocks
+	var blocks [][]byte
+	for blockSize < len(decoded) {
+		decoded, blocks = decoded[blockSize:], append(blocks, decoded[0:blockSize:blockSize])
+	}
+	blocks = append(blocks, decoded)
+
+	// Decrypt each block
+	var plains []byte
+	for _, block := range blocks {
+		plain, err := rsa.DecryptPKCS1v15(rand.Reader, privateKey, block)
+		if err != nil {
+			return "", err
+		}
+		plains = append(plains, plain...)
+	}
+
+	return string(plains), nil
+}
+
+func Sign(privateKey *rsa.PrivateKey, data string) (string, error) {
+	h := sha256.New()
+	h.Write([]byte(data))
+	hashed := h.Sum(nil)
+	signature, err := rsa.SignPKCS1v15(rand.Reader, privateKey, crypto.SHA256, hashed)
+	if err != nil {
+		return "", err
+	}
+	encoded := base64.StdEncoding.EncodeToString(signature)
+	return encoded, nil
+}
+
+func Verify(publicKey *rsa.PublicKey, data string, sign string) (bool, error) {
+	h := sha256.New()
+	h.Write([]byte(data))
+	hashed := h.Sum(nil)
+	decoded, err := base64.StdEncoding.DecodeString(sign)
+	if err != nil {
+		return false, err
+	}
+	err = rsa.VerifyPKCS1v15(publicKey, crypto.SHA256, hashed, decoded)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
