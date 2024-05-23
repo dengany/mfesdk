@@ -9,6 +9,7 @@ import (
 	"encoding/base64"
 	"encoding/pem"
 	"errors"
+	"fmt"
 	"log"
 	"os"
 
@@ -58,13 +59,15 @@ func NewMfe(op *MfeOption) *MFECONF {
 }
 
 func getPrivateKey(pfxPath string, passphrase string) (*rsa.PrivateKey, error) {
+
 	rawData, err := os.ReadFile(pfxPath)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("无法读取私钥文件: %v", err)
 	}
+
 	blocks, err := pkcs12.ToPEM(rawData, passphrase)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("无法提取私钥: %v", err)
 	}
 
 	_, rest := pem.Decode(blocks[0].Bytes)
@@ -169,11 +172,11 @@ func verify(data []byte, sign []byte, cfg *MFECONF) (bool, error) {
 	hashed := h.Sum(nil)
 	decoded, err := base64.StdEncoding.DecodeString(string(sign))
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("无法解密签名: %v", err)
 	}
 	err = rsa.VerifyPKCS1v15(cfg.PublicKey, crypto.SHA256, hashed, decoded)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("签名验证失败: %v", err)
 	}
 	return true, nil
 }
