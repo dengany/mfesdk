@@ -14,10 +14,10 @@ type Demo struct {
 
 func main() {
 	op := &mfesdk.MfeOption{
-		PubPath:  "cer/xxxx.cer",
-		PriPath:  "cer/xxxx.pfx",
+		PubPath:  "cer/4123334885.cer",
+		PriPath:  "cer/eeee.pfx",
 		PriPwd:   "123456",
-		AgencyNo: "20240226175310079x",
+		AgencyNo: "202402261753100790",
 		IsProd:   false,
 	}
 	mfe := mfesdk.NewMfe(op)

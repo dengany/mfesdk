@@ -100,7 +100,7 @@ func getPublicKey(cerPath string) (*rsa.PublicKey, error) {
 	}
 	return pubKey, nil
 }
-func encrypt(data string, cfg *MFECONF) (string, error) {
+func Encrypt(data string, cfg *MFECONF) (string, error) {
 	encrypted := []byte(data)
 	blockSize := (cfg.PublicKey.N.BitLen() / 8) - 11
 
@@ -125,7 +125,7 @@ func encrypt(data string, cfg *MFECONF) (string, error) {
 	return cipher, nil
 }
 
-func decrypt(cipher string, cfg *MFECONF) (string, error) {
+func Decrypt(cipher string, cfg *MFECONF) (string, error) {
 
 	decoded, err := base64.StdEncoding.DecodeString(cipher)
 	if err != nil {
@@ -166,7 +166,7 @@ func signature(data []byte, cfg *MFECONF) (string, error) {
 	return encoded, nil
 }
 
-func verify(data []byte, sign []byte, cfg *MFECONF) (bool, error) {
+func Verify(data []byte, sign []byte, cfg *MFECONF) (bool, error) {
 	h := sha256.New()
 	h.Write(data)
 	hashed := h.Sum(nil)

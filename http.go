@@ -62,7 +62,7 @@ func doPostReq(urlStr string, reqBody []byte, cfg *MFECONF) (*Response, error) {
 		log.Println("请求返回失败 CODE:", response.Code, "请求返回失败 ERROR:", response.Message, "请求返回失败 DATA:", response.Data)
 		return nil, fmt.Errorf(response.Message)
 	}
-	if ok, err := verify([]byte(response.Data), []byte(respSign), cfg); !ok {
+	if ok, err := Verify([]byte(response.Data), []byte(respSign), cfg); !ok {
 		// 返回中文错误提示
 		return nil, fmt.Errorf("响应签名验证失败:%s", err)
 	}
@@ -74,7 +74,7 @@ urlStr 请求路径
 reqBody 请求参数
 */
 func (c *MFECONF) PostQuery(urlStr string, reqBody string) (*Response, error) {
-	reqBodyBytes, err := encrypt(reqBody, c)
+	reqBodyBytes, err := Encrypt(reqBody, c)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +82,7 @@ func (c *MFECONF) PostQuery(urlStr string, reqBody string) (*Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	res.Data, err = decrypt(res.Data, c)
+	res.Data, err = Decrypt(res.Data, c)
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +98,7 @@ func (c *MFECONF) UploadFile(filepath string) (*Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	res.Data, err = decrypt(res.Data, c)
+	res.Data, err = Decrypt(res.Data, c)
 	if err != nil {
 		return nil, err
 	}
