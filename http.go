@@ -198,9 +198,9 @@ func doUploadFile(urlStr string, filePath string, cfg *MFECONF) (*Response, erro
 		log.Fatal(err)
 		return nil, err
 	}
-	if response.Code != "000000" {
-		log.Println("请求返回失败 CODE:", response.Code, "请求返回失败 ERROR:", response.Message, "请求返回失败 DATA:", response.Data)
-		return nil, fmt.Errorf(response.Message)
-	}
+	// if response.Code != "000000" {
+	log.Println("请求返回失败 CODE:", response.Code, "请求返回失败 ERROR:", response.Message, "请求返回失败 DATA:", response.Data)
+	// 	return nil, fmt.Errorf(response.Message)
+	// }
 	return response, nil
 }
