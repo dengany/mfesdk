@@ -29,9 +29,9 @@ func doPostReq(urlStr string, reqBody []byte, cfg *MFECONF) (*Response, error) {
 	ctx := context.Background()
 	client := g.Client()
 	if cfg.IsProd {
-		urlStr = BASE_API_URL + urlStr
+		urlStr = SCENE_API_URL + urlStr
 	} else {
-		urlStr = BASE_TEST_API_URL + urlStr
+		urlStr = SCENE_TEST_API_URL + urlStr
 	}
 	Sign, _ := cfg.Sign(reqBody)
 	timd := time.Now().UTC().Format("Mon, 02 Jan 2006 15:04:05 GMT")
@@ -58,10 +58,7 @@ func doPostReq(urlStr string, reqBody []byte, cfg *MFECONF) (*Response, error) {
 		g.Log().Error(ctx, err)
 		return nil, err
 	}
-	// if response.Code != "000000" {
 	log.Println("请求返回失败 CODE:", response.Code, "请求返回失败 ERROR:", response.Message, "请求返回失败 DATA:", response.Data)
-	// 	return nil, fmt.Errorf(response.Message)
-	// }
 	if ok, err := cfg.Verify([]byte(response.Data), []byte(respSign)); !ok {
 		// 返回中文错误提示
 		return nil, fmt.Errorf("响应签名验证失败:%s", err)
@@ -109,9 +106,9 @@ func doUploadFile(urlStr string, filePath string, cfg *MFECONF) (*Response, erro
 	// ctx := gctx.New()
 
 	if cfg.IsProd {
-		urlStr = BASE_API_URL + urlStr
+		urlStr = SCENE_API_URL + urlStr
 	} else {
-		urlStr = BASE_TEST_API_URL + urlStr
+		urlStr = SCENE_TEST_API_URL + urlStr
 	}
 	file, err := os.Open(filePath)
 	if err != nil {
@@ -176,16 +173,11 @@ func doUploadFile(urlStr string, filePath string, cfg *MFECONF) (*Response, erro
 	req.Header.Set("X-Time", requestTime)
 	req.Header.Set("X-Trace", requestTrace)
 
-	// fmt.Println("Request header:", req.Header)
-
 	res, err := client.Do(req)
 	if err != nil {
 		panic(err)
 	}
 	defer res.Body.Close()
-
-	fmt.Println("Response HTTP status:", res.Status)
-
 	resbody, err := io.ReadAll(res.Body)
 	if err != nil {
 		log.Fatal(err)
@@ -193,14 +185,67 @@ func doUploadFile(urlStr string, filePath string, cfg *MFECONF) (*Response, erro
 	}
 	response := &Response{}
 	err = json.Unmarshal(resbody, response)
-	// err = gconv.Scan(resbody, response)
 	if err != nil {
 		log.Fatal(err)
 		return nil, err
 	}
-	// if response.Code != "000000" {
 	log.Println("请求返回失败 CODE:", response.Code, "请求返回失败 ERROR:", response.Message, "请求返回失败 DATA:", response.Data)
-	// 	return nil, fmt.Errorf(response.Message)
-	// }
+
 	return response, nil
+}
+
+func doPayReq(urlStr string, reqBody []byte, cfg *MFECONF) (*Response, error) {
+	ctx := context.Background()
+	client := g.Client()
+	if cfg.IsProd {
+		urlStr = DREAM_API_URL + urlStr
+	} else {
+		urlStr = DREAM_TEST_API_URL + urlStr
+	}
+	Sign, _ := cfg.Sign(reqBody)
+	timd := time.Now().UTC().Format("Mon, 02 Jan 2006 15:04:05 GMT")
+	client.SetHeader("Content-Type", "application/json")
+	client.SetHeader("X-Security", "CFCA")
+	client.SetHeader("X-AGENCY", cfg.AgencyNo)
+	client.SetHeader("X-Sign", Sign)
+	client.SetHeader("X-Time", timd)
+	client.SetHeader("X-Trace", fmt.Sprint(time.Now().UnixNano()))
+	req, _ := json.Marshal(g.Map{"param": string(reqBody)})
+	res, err := client.Post(ctx, urlStr, req)
+	if err != nil {
+		g.Log().Error(ctx, err)
+		return nil, err
+	}
+	defer res.Close()
+	respSign := res.Header.Get("X-Sign")
+
+	body := res.ReadAll()
+	response := &Response{}
+	// err = gconv.Scan(body, response)
+	err = json.Unmarshal(body, response)
+	if err != nil {
+		g.Log().Error(ctx, err)
+		return nil, err
+	}
+	log.Println("请求返回失败 CODE:", response.Code, "请求返回失败 ERROR:", response.Message, "请求返回失败 DATA:", response.Data)
+	if ok, err := cfg.Verify([]byte(response.Data), []byte(respSign)); !ok {
+		// 返回中文错误提示
+		return nil, fmt.Errorf("响应签名验证失败:%s", err)
+	}
+	return response, nil
+}
+func (m *MFECONF) PayQuery(urlStr string, reqBody string) (*Response, error) {
+	reqBodyBytes, err := m.Encrypt(reqBody)
+	if err != nil {
+		return nil, err
+	}
+	res, err := doPostReq(urlStr, []byte(reqBodyBytes), m)
+	if err != nil {
+		return nil, err
+	}
+	res.Data, err = m.Decrypt(res.Data)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
 }
