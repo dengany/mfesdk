@@ -33,7 +33,7 @@ func doPostReq(urlStr string, reqBody []byte, cfg *MFECONF) (*Response, error) {
 	} else {
 		urlStr = BASE_TEST_API_URL + urlStr
 	}
-	Sign, _ := signature(reqBody, cfg)
+	Sign, _ := Sign(reqBody, cfg)
 	timd := time.Now().UTC().Format("Mon, 02 Jan 2006 15:04:05 GMT")
 	client.SetHeader("Content-Type", "application/json")
 	client.SetHeader("X-Security", "CFCA")
@@ -133,7 +133,7 @@ func doUploadFile(urlStr string, filePath string, cfg *MFECONF) (*Response, erro
 	x_hash := base64.StdEncoding.EncodeToString(hashCipher)
 	// fmt.Println("Request multipart file hash cipher:", x_hash)
 
-	signature, err := signature([]byte(x_hash), cfg)
+	signature, err := Sign([]byte(x_hash), cfg)
 	if err != nil {
 		panic(err)
 	}
