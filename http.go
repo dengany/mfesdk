@@ -58,10 +58,10 @@ func doPostReq(urlStr string, reqBody []byte, cfg *MFECONF) (*Response, error) {
 		g.Log().Error(ctx, err)
 		return nil, err
 	}
-	if response.Code != "000000" {
-		log.Println("请求返回失败 CODE:", response.Code, "请求返回失败 ERROR:", response.Message, "请求返回失败 DATA:", response.Data)
-		return nil, fmt.Errorf(response.Message)
-	}
+	// if response.Code != "000000" {
+	log.Println("请求返回失败 CODE:", response.Code, "请求返回失败 ERROR:", response.Message, "请求返回失败 DATA:", response.Data)
+	// 	return nil, fmt.Errorf(response.Message)
+	// }
 	if ok, err := Verify([]byte(response.Data), []byte(respSign), cfg); !ok {
 		// 返回中文错误提示
 		return nil, fmt.Errorf("响应签名验证失败:%s", err)
