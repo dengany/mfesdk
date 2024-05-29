@@ -239,7 +239,7 @@ func (m *MFECONF) PayQuery(urlStr string, reqBody string) (*Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	res, err := doPostReq(urlStr, []byte(reqBodyBytes), m)
+	res, err := doPayReq(urlStr, []byte(reqBodyBytes), m)
 	if err != nil {
 		return nil, err
 	}
