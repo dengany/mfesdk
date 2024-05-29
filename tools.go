@@ -102,9 +102,9 @@ func getPublicKey(cerPath string) (*rsa.PublicKey, error) {
 }
 
 // 加密
-func Encrypt(data string, cfg *MFECONF) (string, error) {
+func (m *MFECONF) Encrypt(data string) (string, error) {
 	encrypted := []byte(data)
-	blockSize := (cfg.PublicKey.N.BitLen() / 8) - 11
+	blockSize := (m.PublicKey.N.BitLen() / 8) - 11
 
 	// Split the data into blocks
 	var blocks [][]byte
@@ -116,7 +116,7 @@ func Encrypt(data string, cfg *MFECONF) (string, error) {
 	// Encrypt each block
 	var ciphers []byte
 	for _, block := range blocks {
-		cipher, err := rsa.EncryptPKCS1v15(rand.Reader, cfg.PublicKey, block)
+		cipher, err := rsa.EncryptPKCS1v15(rand.Reader, m.PublicKey, block)
 		if err != nil {
 			return "", err
 		}
@@ -128,14 +128,14 @@ func Encrypt(data string, cfg *MFECONF) (string, error) {
 }
 
 // 解密
-func Decrypt(cipher string, cfg *MFECONF) (string, error) {
+func (m *MFECONF) Decrypt(cipher string) (string, error) {
 
 	decoded, err := base64.StdEncoding.DecodeString(cipher)
 	if err != nil {
 		return "", err
 	}
 
-	blockSize := cfg.PrivateKey.N.BitLen() / 8
+	blockSize := m.PrivateKey.N.BitLen() / 8
 
 	// Split the data into blocks
 	var blocks [][]byte
@@ -147,7 +147,7 @@ func Decrypt(cipher string, cfg *MFECONF) (string, error) {
 	// Decrypt each block
 	var plains []byte
 	for _, block := range blocks {
-		plain, err := rsa.DecryptPKCS1v15(rand.Reader, cfg.PrivateKey, block)
+		plain, err := rsa.DecryptPKCS1v15(rand.Reader, m.PrivateKey, block)
 		if err != nil {
 			return "", err
 		}
@@ -156,12 +156,12 @@ func Decrypt(cipher string, cfg *MFECONF) (string, error) {
 	return string(plains), nil
 }
 
-func Sign(data []byte, cfg *MFECONF) (string, error) {
+func (m *MFECONF) Sign(data []byte) (string, error) {
 
 	h := sha256.New()
 	h.Write(data)
 	hashed := h.Sum(nil)
-	signature, err := rsa.SignPKCS1v15(rand.Reader, cfg.PrivateKey, crypto.SHA256, hashed)
+	signature, err := rsa.SignPKCS1v15(rand.Reader, m.PrivateKey, crypto.SHA256, hashed)
 	if err != nil {
 		return "", err
 	}
@@ -170,7 +170,7 @@ func Sign(data []byte, cfg *MFECONF) (string, error) {
 }
 
 // 验签
-func Verify(data []byte, sign []byte, cfg *MFECONF) (bool, error) {
+func (m *MFECONF) Verify(data []byte, sign []byte) (bool, error) {
 	h := sha256.New()
 	h.Write(data)
 	hashed := h.Sum(nil)
@@ -178,7 +178,7 @@ func Verify(data []byte, sign []byte, cfg *MFECONF) (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("无法解密签名: %v", err)
 	}
-	err = rsa.VerifyPKCS1v15(cfg.PublicKey, crypto.SHA256, hashed, decoded)
+	err = rsa.VerifyPKCS1v15(m.PublicKey, crypto.SHA256, hashed, decoded)
 	if err != nil {
 		return false, fmt.Errorf("签名验证失败: %v", err)
 	}

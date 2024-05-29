@@ -33,7 +33,7 @@ func doPostReq(urlStr string, reqBody []byte, cfg *MFECONF) (*Response, error) {
 	} else {
 		urlStr = BASE_TEST_API_URL + urlStr
 	}
-	Sign, _ := Sign(reqBody, cfg)
+	Sign, _ := cfg.Sign(reqBody)
 	timd := time.Now().UTC().Format("Mon, 02 Jan 2006 15:04:05 GMT")
 	client.SetHeader("Content-Type", "application/json")
 	client.SetHeader("X-Security", "CFCA")
@@ -62,7 +62,7 @@ func doPostReq(urlStr string, reqBody []byte, cfg *MFECONF) (*Response, error) {
 	log.Println("请求返回失败 CODE:", response.Code, "请求返回失败 ERROR:", response.Message, "请求返回失败 DATA:", response.Data)
 	// 	return nil, fmt.Errorf(response.Message)
 	// }
-	if ok, err := Verify([]byte(response.Data), []byte(respSign), cfg); !ok {
+	if ok, err := cfg.Verify([]byte(response.Data), []byte(respSign)); !ok {
 		// 返回中文错误提示
 		return nil, fmt.Errorf("响应签名验证失败:%s", err)
 	}
@@ -73,16 +73,16 @@ func doPostReq(urlStr string, reqBody []byte, cfg *MFECONF) (*Response, error) {
 urlStr 请求路径
 reqBody 请求参数
 */
-func (c *MFECONF) PostQuery(urlStr string, reqBody string) (*Response, error) {
-	reqBodyBytes, err := Encrypt(reqBody, c)
+func (m *MFECONF) PostQuery(urlStr string, reqBody string) (*Response, error) {
+	reqBodyBytes, err := m.Encrypt(reqBody)
 	if err != nil {
 		return nil, err
 	}
-	res, err := doPostReq(urlStr, []byte(reqBodyBytes), c)
+	res, err := doPostReq(urlStr, []byte(reqBodyBytes), m)
 	if err != nil {
 		return nil, err
 	}
-	res.Data, err = Decrypt(res.Data, c)
+	res.Data, err = m.Decrypt(res.Data)
 	if err != nil {
 		return nil, err
 	}
@@ -92,13 +92,13 @@ func (c *MFECONF) PostQuery(urlStr string, reqBody string) (*Response, error) {
 /*
 文件上传
 */
-func (c *MFECONF) UploadFile(filepath string) (*Response, error) {
+func (m *MFECONF) UploadFile(filepath string) (*Response, error) {
 
-	res, err := doUploadFile("/file/api/upload", filepath, c)
+	res, err := doUploadFile("/file/api/upload", filepath, m)
 	if err != nil {
 		return nil, err
 	}
-	res.Data, err = Decrypt(res.Data, c)
+	res.Data, err = m.Decrypt(res.Data)
 	if err != nil {
 		return nil, err
 	}
@@ -133,7 +133,7 @@ func doUploadFile(urlStr string, filePath string, cfg *MFECONF) (*Response, erro
 	x_hash := base64.StdEncoding.EncodeToString(hashCipher)
 	// fmt.Println("Request multipart file hash cipher:", x_hash)
 
-	signature, err := Sign([]byte(x_hash), cfg)
+	signature, err := cfg.Sign([]byte(x_hash))
 	if err != nil {
 		panic(err)
 	}
