@@ -58,7 +58,7 @@ func doPostReq(urlStr string, reqBody []byte, cfg *MFECONF) (*Response, error) {
 		g.Log().Error(ctx, err)
 		return nil, err
 	}
-	log.Println("请求返回失败 CODE:", response.Code, "请求返回失败 ERROR:", response.Message, "请求返回失败 DATA:", response.Data)
+	// log.Println("请求返回失败 CODE:", response.Code, "请求返回失败 ERROR:", response.Message, "请求返回失败 DATA:", response.Data)
 	if ok, err := cfg.Verify([]byte(response.Data), []byte(respSign)); !ok {
 		// 返回中文错误提示
 		return nil, fmt.Errorf("响应签名验证失败:%s", err)
@@ -75,6 +75,9 @@ func (m *MFECONF) PostQuery(urlStr string, reqBody string) (*Response, error) {
 	if err != nil {
 		return nil, err
 	}
+	if !m.IsProd {
+		log.Println("请求参数:", reqBodyBytes)
+	}
 	res, err := doPostReq(urlStr, []byte(reqBodyBytes), m)
 	if err != nil {
 		return nil, err
@@ -83,6 +86,7 @@ func (m *MFECONF) PostQuery(urlStr string, reqBody string) (*Response, error) {
 	if err != nil {
 		return nil, err
 	}
+	log.Println("请求返回 CODE:", res.Code, "请求返回 MSG:", res.Message, "请求返回 DATA:", res.Data)
 	return res, nil
 }
 
@@ -227,7 +231,7 @@ func doPayReq(urlStr string, reqBody []byte, cfg *MFECONF) (*Response, error) {
 		g.Log().Error(ctx, err)
 		return nil, err
 	}
-	log.Println("请求返回失败 CODE:", response.Code, "请求返回失败 ERROR:", response.Message, "请求返回失败 DATA:", response.Data)
+	// log.Println("请求返回失败 CODE:", response.Code, "请求返回失败 ERROR:", response.Message, "请求返回失败 DATA:", response.Data)
 	if ok, err := cfg.Verify([]byte(response.Data), []byte(respSign)); !ok {
 		// 返回中文错误提示
 		return nil, fmt.Errorf("响应签名验证失败:%s", err)
