@@ -1,7 +1,7 @@
 package mfesdk
 
 // 生产url
-const SCENE_API_URL = " https://scene.mfe88.com"
+const SCENE_API_URL = "https://scene.mfe88.com"
 const DREAM_API_URL = "https://dream.mfe88.com"
 
 // 测试url
